@@ -2,6 +2,13 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import argparse
+
+# 解析命令行參數
+ap = argparse.ArgumentParser()
+ap.add_argument("-d", "--data_dir", required=True, help="Path to the training data directory")
+ap.add_argument("-o", "--output", default="emotion_model.h5", help="Path to save the trained model (default: emotion_model.h5)")
+args = vars(ap.parse_args())
 
 # 構建模型(CNN)
 model = Sequential([
@@ -42,7 +49,7 @@ train_datagen = ImageDataGenerator(
 
 # 從目錄載入訓練資料
 train_generator = train_datagen.flow_from_directory(
-    'face/train',  # 訓練資料目錄
+    args["data_dir"],  # 訓練資料目錄
     target_size=(48, 48),  # 將圖片調整為48x48大小
     batch_size=64,  # 每批處理64張圖片
     color_mode="grayscale",  # 灰階
@@ -54,5 +61,5 @@ train_generator = train_datagen.flow_from_directory(
 model.fit(train_generator, epochs=50, steps_per_epoch=100)
 
 # 儲存模型
-# 將訓練完成的模型儲存為"emotion_model.h5"
-model.save("emotion_model.h5")
+# 將訓練完成的模型儲存
+model.save(args["output"])
