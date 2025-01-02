@@ -4,62 +4,62 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import argparse
 
-# 解析命令行參數
+# Parse command-line arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--data_dir", required=True, help="Path to the training data directory")
 ap.add_argument("-o", "--output", default="emotion_model.h5", help="Path to save the trained model (default: emotion_model.h5)")
 args = vars(ap.parse_args())
 
-# 構建模型(CNN)
+# Build the CNN model
 model = Sequential([
-    # 第一層捲積層：使用32個3x3的濾波器，激活函數為ReLU，輸入圖片大小為48x48，單通道
+    # First convolutional layer: 32 filters with size 3x3, ReLU activation, input shape is 48x48 with a single channel
     Conv2D(32, (3, 3), activation='relu', input_shape=(48, 48, 1)),
-    # 最大池化層：將特徵圖降維，池化區域大小為2x2
+    # Max pooling layer: reduces spatial dimensions, pool size is 2x2
     MaxPooling2D(pool_size=(2, 2)),
-    # Dropout 層：丟棄25%的神經元以減少過擬合
+    # Dropout layer: randomly drops 25% of neurons to reduce overfitting
     Dropout(0.25),
-    # 第二層捲積層：使用64個3x3的濾波器
+    # Second convolutional layer: 64 filters with size 3x3
     Conv2D(64, (3, 3), activation='relu'),
-    # 最大池化層
+    # Max pooling layer
     MaxPooling2D(pool_size=(2, 2)),
-    # Dropout 層
+    # Dropout layer
     Dropout(0.25),
-    # 將多維數據展平成一維向量，為全連接層準備輸入
+    # Flatten layer: converts multidimensional data into a 1D vector for the fully connected layers
     Flatten(),
-    # 全連接層：包含128個神經元，激活函數為ReLU
+    # Fully connected layer: 128 neurons, ReLU activation
     Dense(128, activation='relu'),
-    # Dropout 層
+    # Dropout layer
     Dropout(0.5),
-    # 輸出層：3個神經元（3種情緒），使用softmax激活函數輸出概率分布
-    Dense(3, activation='softmax')  # 3種情緒
+    # Output layer: 3 neurons (for 3 emotion categories), softmax activation to output probability distribution
+    Dense(3, activation='softmax')  # 3 emotion categories
 ])
 
-# 編譯模型
-# 使用 Adam 優化器，學習率設為 0.001
+# Compile the model
+# Using Adam optimizer with a learning rate of 0.001
 model.compile(optimizer=Adam(learning_rate=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
 
-# 訓練資料增強
-# 使用ImageDataGenerator進行資料預處理和增強
+# Data augmentation
+# Using ImageDataGenerator to preprocess and augment training data
 train_datagen = ImageDataGenerator(
-    rescale=1./255,  # 將像素值標準化到[0, 1]
-    rotation_range=10,  # 隨機旋轉角度範圍為[-10, 10]度
-    width_shift_range=0.1,  # 隨機水平平移範圍為圖片寬度的10%
-    height_shift_range=0.1  # 隨機垂直平移範圍為圖片高度的10%
+    rescale=1./255,  # Normalize pixel values to the range [0, 1]
+    rotation_range=10,  # Randomly rotate images within a range of [-10, 10] degrees
+    width_shift_range=0.1,  # Randomly shift images horizontally by up to 10% of the width
+    height_shift_range=0.1  # Randomly shift images vertically by up to 10% of the height
 )
 
-# 從目錄載入訓練資料
+# Load training data from the specified directory
 train_generator = train_datagen.flow_from_directory(
-    args["data_dir"],  # 訓練資料目錄
-    target_size=(48, 48),  # 將圖片調整為48x48大小
-    batch_size=64,  # 每批處理64張圖片
-    color_mode="grayscale",  # 灰階
-    class_mode="categorical"  # 設定標籤為多分類模式，返回one-hot形式
+    args["data_dir"],  # Training data directory
+    target_size=(48, 48),  # Resize images to 48x48
+    batch_size=64,  # Process 64 images per batch
+    color_mode="grayscale",  # Load images in grayscale
+    class_mode="categorical"  # Multi-class labels, one-hot encoded
 )
 
-# 訓練模型
-# 訓練模型50個epoch
+# Train the model
+# Train for 50 epochs
 model.fit(train_generator, epochs=50, steps_per_epoch=100)
 
-# 儲存模型
-# 將訓練完成的模型儲存
+# Save the trained model
+# Save the model to the specified output path
 model.save(args["output"])
